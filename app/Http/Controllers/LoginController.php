@@ -18,12 +18,20 @@ class LoginController extends Controller
     }
 
     public function actionlogin(Request $request){
-        $data = ['email'=>$request-> input('email'), 'password'=>$request-> input('password'),];
+        $data = [
+            'email'=>$request-> input('email'), 
+            'password'=>$request-> input('password'),
+            'active' => 1];
         if(Auth::attempt($data)){
             return redirect('home');
         } else {
             Session::flash('error', 'Invalid email or password');
             return redirect()->route('login');
         }
+    }
+
+    public function actionlogout(){
+        Auth::logout();
+        return redirect('/');
     }
 }

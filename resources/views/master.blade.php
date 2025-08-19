@@ -5,6 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard Hadirin Wisuda - Politeknik Statistika</title>
+    <meta name="csrf-token" content="{{ csrf_token() }}">
 
     <!-- Bootstrap 5 -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -14,6 +15,9 @@
 
     <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    {{-- JQuery --}}
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
 
     <style>
         :root {
@@ -101,34 +105,18 @@
                     <p>Politeknik Statistika STIS</p>
                 </div>
 
-                <!-- User Menu -->
+                <!-- User Menu - FIXED BOOTSTRAP 5 VERSION -->
                 <div class="col-md-4 d-flex justify-content-end">
                     <div class="dropdown">
-                        <a href="#"
-                            class="dropdown-toggle d-flex align-items-center text-white text-decoration-none"
-                            data-bs-toggle="dropdown" aria-expanded="false" role="button">
-                            <i class="fas fa-user-circle fa-lg me-2"></i>
-                            <span class="d-none d-lg-inline">admin@stis.ac.id</span>
-                        </a>
-                        <ul class="dropdown-menu dropdown-menu-end">
-                            <li>
-                                <a class="dropdown-item" href="#profile">
-                                    <i class="fas fa-user-circle me-2"></i> Profile
-                                </a>
-                            </li>
-                            <li>
-                                <a class="dropdown-item" href="#settings">
-                                    <i class="fas fa-cog me-2"></i> Pengaturan
-                                </a>
-                            </li>
-                            <li>
-                                <hr class="dropdown-divider">
-                            </li>
-                            <li>
-                                <a class="dropdown-item text-danger" href="#logout">
-                                    <i class="fas fa-sign-out-alt me-2"></i> Log Out
-                                </a>
-                            </li>
+                        <button class="btn dropdown-toggle d-flex align-items-center" type="button" id="userDropdown"
+                            data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="fa fa-user me-2"></i>
+                            <span>{{ Auth::user()->email }}</span>
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
+                            <li><a class="dropdown-item" href="{{ route('actionlogout') }}">
+                                    <i class="fa fa-power-off me-2"></i> Log Out
+                                </a></li>
                         </ul>
                     </div>
                 </div>
@@ -136,13 +124,13 @@
         </div>
     </div>
 
+
     <!-- Content -->
     <div class="container mt-4">
         @yield('konten')
     </div>
 
-    <!-- Bootstrap JS -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- html 5 QR code Library JS -->
     <script src="https://unpkg.com/html5-qrcode"></script>
 </body>
 
