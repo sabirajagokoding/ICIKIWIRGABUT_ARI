@@ -62,8 +62,8 @@
                 </div>
             </div>
 
-            <div class="col-12 col-md-4">
-                <div class="card stats-card" style="border-left-color: #10b981;">
+            <div class="col-12 col-md-4 pe-auto" onclick="showTable('attended')">
+                <div class="card stats-card cursor-pointer" style="border-left-color: #10b981;">
                     <div class="card-body d-flex align-items-center">
                         <div class="flex-grow-1">
                             <h6 class="text-muted mb-0">Telah Hadir</h6>
@@ -74,8 +74,8 @@
                 </div>
             </div>
 
-            <div class="col-12 col-md-4">
-                <div class="card stats-card" style="border-left-color: #ef4444;">
+            <div class="col-12 col-md-4" onclick="showTable('notAttended')">
+                <div class="card stats-card cursor-pointer" style="border-left-color: #ef4444;">
                     <div class="card-body d-flex align-items-center">
                         <div class="flex-grow-1">
                             <h6 class="text-muted mb-0">Belum Hadir</h6>
@@ -117,7 +117,7 @@
                         <span class="input-group-text">
                             <i class="fas fa-search"></i>
                         </span>
-                        <input type="text" class="form-control" placeholder="Cari nama atau NIM...">
+                        <input type="text" id="searchInput" class="form-control" placeholder="Cari nama atau NIM...">
                     </div>
                 </div>
 
@@ -406,6 +406,24 @@
                 })
                 .catch(err => console.error('Error fetching chart data:', err));
         }
+
+        // Aktifkan search filter
+        document.getElementById("searchInput").addEventListener("keyup", function() {
+            let filter = this.value.toLowerCase(); // ambil input & lowercase
+            let rows = document.querySelectorAll("#tableBody tr");
+
+            rows.forEach(row => {
+                let nim = row.cells[1].textContent.toLowerCase(); // kolom NIM
+                let nama = row.cells[2].textContent.toLowerCase(); // kolom Nama
+
+                if (nim.includes(filter) || nama.includes(filter)) {
+                    row.style.display = ""; // tampilkan
+                } else {
+                    row.style.display = "none"; // sembunyikan
+                }
+            });
+        });
+
 
         function populateTable(data, status, color) {
             const tableBody = document.getElementById('tableBody');
