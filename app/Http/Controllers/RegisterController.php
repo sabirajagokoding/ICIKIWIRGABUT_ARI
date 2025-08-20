@@ -20,7 +20,7 @@ class RegisterController extends Controller
 
     public function actionregister(Request $request)
     {
-        // ✅ Validasi input
+        // Validasi input
         $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email',

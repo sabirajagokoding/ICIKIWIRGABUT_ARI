@@ -114,9 +114,20 @@
                             <span>{{ Auth::user()->email }}</span>
                         </button>
                         <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
-                            <li><a class="dropdown-item" href="{{ route('actionlogout') }}">
+                            <li>
+                                <a href="#"
+                                    onclick="event.preventDefault(); document.getElementById('logout-form').submit();"
+                                    class="dropdown-item">
                                     <i class="fa fa-power-off me-2"></i> Log Out
-                                </a></li>
+                                    
+                                </a>
+
+                                <form id="logout-form" action="{{ route('actionlogout') }}" method="POST"
+                                    class="d-none">
+                                    @csrf
+                                </form>
+                            </li>
+                            
                         </ul>
                     </div>
                 </div>

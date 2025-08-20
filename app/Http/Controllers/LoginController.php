@@ -22,12 +22,14 @@ class LoginController extends Controller
             'email'=>$request-> input('email'), 
             'password'=>$request-> input('password'),
             'active' => 1];
+            
         if(Auth::attempt($data)){
             return redirect('home');
         } else {
             Session::flash('error', 'Invalid email or password');
             return redirect()->route('login');
         }
+        
     }
 
     public function actionlogout(){
