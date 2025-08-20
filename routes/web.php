@@ -15,7 +15,7 @@ Route::post('actionlogin', [LoginController::class, 'actionlogin'])->name('actio
 
 Route::get('home', [HomeController::class, 'index'])->name('home')->middleware('auth');
 Route::post('actionlogout', [LoginController::class, 'actionlogout'])->name('actionlogout')->middleware('auth');
-Route::get('actionlogout', [LoginController::class, 'actionlogin'])->name('actionlogout')->middleware('auth');
+Route::get('actionlogout', [LoginController::class, 'actionlogin'])->middleware('auth');
 
 //REGISTER
 Route::get('register', [RegisterController::class, 'register'])->name('register')->middleware(middleware: 'guest');
