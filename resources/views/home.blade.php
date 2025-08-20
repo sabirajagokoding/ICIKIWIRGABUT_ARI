@@ -145,23 +145,20 @@
                                 <th>No</th>
                                 <th>NIM</th>
                                 <th>Nama</th>
-                                <th>
-                                    <div class="dropdown">
-                                        <button class="btn btn-secondary dropdown-toggle bg-transparent text-black fw-bold"
-                                            type="button" data-bs-toggle="dropdown" aria-expanded="false"
-                                            id="ts-prodi">
-                                            Kelas
-                                        </button>
-                                        <ul class="dropdown-menu">
-                                            <li><button class="dropdown-item" onclick="prodiFilter('all')">Semua</button>
-                                            </li>
-                                            <li><button class="dropdown-item" onclick="prodiFilter('SI')">SI</button></li>
-                                            <li><button class="dropdown-item" onclick="prodiFilter('SD')">SD</button></li>
-                                            <li><button class="dropdown-item" onclick="prodiFilter('SK')">SK</button></li>
-                                            <li><button class="dropdown-item" onclick="prodiFilter('SE')">SE</button></li>
-                                            <li><button class="dropdown-item" onclick="prodiFilter('D3')">D3</button></li>
-                                        </ul>
-                                    </div>
+                                <th class="dropdown">
+                                    <button class="btn btn-secondary dropdown-toggle bg-transparent text-black fw-bold"
+                                        type="button" data-bs-toggle="dropdown" aria-expanded="false" id="ts-prodi">
+                                        Kelas
+                                    </button>
+                                    <ul class="dropdown-menu">
+                                        <li><button class="dropdown-item" onclick="prodiFilter('all')">Semua</button>
+                                        </li>
+                                        <li><button class="dropdown-item" onclick="prodiFilter('SI')">SI</button></li>
+                                        <li><button class="dropdown-item" onclick="prodiFilter('SD')">SD</button></li>
+                                        <li><button class="dropdown-item" onclick="prodiFilter('SK')">SK</button></li>
+                                        <li><button class="dropdown-item" onclick="prodiFilter('SE')">SE</button></li>
+                                        <li><button class="dropdown-item" onclick="prodiFilter('D3')">D3</button></li>
+                                    </ul>
                                 </th>
                                 <th>Status</th>
                                 <th>Waktu</th>
@@ -179,27 +176,26 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script>
+        /*
+         ** -------------------------------------
+         **     GLOBAL VARIABLES & FUNCTIONS
+         ** -------------------------------------
+         */
         let peminatanFiltered = 'all';
-        function prodiFilter(peminatans) {
-            peminatanFiltered = peminatans;
-            let peminatan = peminatans;
-            if (peminatans === 'all') {
-                peminatan = 'Kelas';
-            }
-            document.getElementById('cs-prodi').innerHTML = peminatan;
-            document.getElementById('ts-prodi').innerHTML = peminatan;
-            fetchAttendanceData(peminatans);
+        let dataMahasiswa = [];
 
-            let rows = document.querySelectorAll("#tableBody tr");
-            rows.forEach(row => {
-                let peminatanCells = row.cells[3].textContent.toLowerCase(); // kolom Peminatan
-                if (peminatanCells.includes(peminatans.toLowerCase()) || peminatans === "all") {
-                    row.style.display = ""; // tampilkan
-                } else {
-                    row.style.display = "none"; // sembunyikan
-                }
-            });
+
+        // Function to fetch updated data from the server
+        async function getUpdatedData() {
+            try {
+                const res = await fetch('/mahasiswa');
+                const data = await res.json();
+                dataMahasiswa = data.allAttended;
+            } catch (err) {
+                console.error("Error fetching chart data:", err);
+            }
         }
+
 
         // Ensure the DOM is fully loaded before running scripts
         function domReady(fn) {
@@ -210,7 +206,119 @@
             }
         }
 
-        //Update attandance 
+
+
+
+
+        /*
+         ** ------------------------
+         ** SCAN & UPDATE ATTANDANCE
+         ** ------------------------
+         */
+
+        // Handle QR code scanning when the DOM is ready
+        domReady(function() {
+            var nim;
+            let result;
+            let processing = false;
+            var myqr = document.getElementById('scanResult');
+            var lastResult, countResults = 0;
+
+            function onScanSuccess(decodedText, decodedResult) {
+                if (decodedText !== lastResult) {
+                    lastResult = decodedText;
+                    processing = false;
+                }
+
+                if (!processing) {
+                    processing = true;
+                    let scanResult = decryptAES(decodedText);
+                    let nim = scanResult.split(";")[0];
+                    confirmationMahasiswa(nim); // call confirmation modal
+                    myqr.classList.remove('d-none');
+                    myqr.innerHTML = `<strong>Hasil Scan Terakhir:</strong> ${result}`;
+                }
+            }
+
+            function onScanError(errMessege) {
+                processing = false;
+            }
+
+            var htmlscanner = new Html5QrcodeScanner(
+                "qrReader", {
+                    fps: 10,
+                    qrbox: 250
+                }
+            )
+
+            htmlscanner.render(onScanSuccess, onScanError);
+        })
+
+
+        // Function to handle confirmation of mahasiswa presence
+        function confirmationMahasiswa(nim) {
+            fetch(`/mahasiswa/${nim}`) // check existance of NIM
+                .then(res => res.json())
+                .then(data => {
+                    if (data.message) { // NIM not found message
+                        Swal.fire({
+                            icon: "error",
+                            title: "GAGAL!",
+                            text: data.message,
+                            showConfirmButton: false,
+                            timer: 2000
+                        });
+                    } else { // nim found
+                        if (data.status === 1) { // mahasiswa already attended
+                            Swal.fire({
+                                icon: "info",
+                                title: "Sudah Hadir!",
+                                text: data.nama + " sudah ditandai hadir.",
+                                showConfirmButton: false,
+                                timer: 2000
+                            });
+                        } else { // mahasiswa not attended
+                            const swalWithBootstrapButtons = Swal.mixin({
+                                customClass: {
+                                    confirmButton: "btn btn-success",
+                                    cancelButton: "btn btn-danger me-2"
+                                },
+                                buttonsStyling: false
+                            });
+
+                            swalWithBootstrapButtons.fire({
+                                title: "Konfirmasi Kehadiran?",
+                                text: data.nama + " akan ditandai hadir",
+                                icon: "question",
+                                showCancelButton: true,
+                                confirmButtonText: "Konfirmasi Hadir",
+                                cancelButtonText: "Batalkan",
+                                reverseButtons: true
+                            }).then((result) => {
+                                if (result.isConfirmed) {
+                                    updateAttendance(data, nim); // update attendance status
+                                } else if (result.dismiss === Swal.DismissReason.cancel) {
+                                    Swal.fire({
+                                        title: "Dibatalkan",
+                                        text: "Tidak ada perubahan pada kehadiran.",
+                                        icon: "error"
+                                    });
+                                }
+
+                                processing = false;
+                            });
+                        }
+
+                    }
+                })
+                .catch(err => {
+                    console.error("Fetch error:", err);
+                    processing = false;
+                });
+        }
+
+
+        // Update attandance status
         function updateAttendance(data, nim) {
             // Get values from input fields
             let token = $("meta[name='csrf-token']").attr("content");
@@ -224,8 +332,10 @@
                     "_token": token
                 },
                 success: function(response) {
-                    //show success message
-                    fetchAttendanceData('all');
+                    domReady(async () => {
+                        await getUpdatedData(); // wait till load data from server done
+                        fetchAttendanceData('all'); //
+                    });
                     Swal.fire({
                         icon: 'success',
                         title: "Terkonfirmasi!",
@@ -249,107 +359,8 @@
             });
         }
 
-        // Function to handle confirmation of mahasiswa presence
-        function confirmationMahasiswa(nim) {
-            fetch(`/mahasiswa/${nim}`)
-                .then(res => res.json())
-                .then(data => {
-                    if (data.message) {
-                        Swal.fire({
-                            icon: "error",
-                            title: "GAGAL!",
-                            text: data.message,
-                            showConfirmButton: false,
-                            timer: 2000
-                        });
-                    } else {
-                        if (data.status === 1) {
-                            Swal.fire({
-                                icon: "info",
-                                title: "Sudah Hadir!",
-                                text: data.nama + " sudah ditandai hadir.",
-                                showConfirmButton: false,
-                                timer: 2000
-                            });
-                        } else {
-                            const swalWithBootstrapButtons = Swal.mixin({
-                                customClass: {
-                                    confirmButton: "btn btn-success",
-                                    cancelButton: "btn btn-danger me-2"
-                                },
-                                buttonsStyling: false
-                            });
 
-                            swalWithBootstrapButtons.fire({
-                                title: "Konfirmasi Kehadiran?",
-                                text: data.nama + " akan ditandai hadir",
-                                icon: "question",
-                                showCancelButton: true,
-                                confirmButtonText: "Konfirmasi Hadir",
-                                cancelButtonText: "Batalkan",
-                                reverseButtons: true
-                            }).then((result) => {
-                                if (result.isConfirmed) {
-                                    updateAttendance(data, nim);
-                                } else if (result.dismiss === Swal.DismissReason.cancel) {
-                                    Swal.fire({
-                                        title: "Dibatalkan",
-                                        text: "Tidak ada perubahan pada kehadiran.",
-                                        icon: "error"
-                                    });
-                                }
-
-                                processing = false;
-                            });
-                        }
-
-                    }
-                })
-                .catch(err => {
-                    console.error("Fetch error:", err);
-                    processing = false;
-                });
-        }
-
-        // Handle QR code scanning when the DOM is ready
-        domReady(function() {
-            var nim;
-            let result;
-            let processing = false;
-            var myqr = document.getElementById('scanResult');
-            var lastResult, countResults = 0;
-
-            function onScanSuccess(decodedText, decodedResult) {
-                if (decodedText !== lastResult) {
-                    lastResult = decodedText;
-                    processing = false;
-                }
-
-                if (!processing) {
-                    processing = true;
-                    let result = decryptAES(decodedText);
-                    let nim = result.split(";")[0];
-                    confirmationMahasiswa(nim);
-                    myqr.classList.remove('d-none');
-                    myqr.innerHTML = `<strong>Hasil Scan Terakhir:</strong> ${result}`;
-                }
-            }
-
-            function onScanError(errMessege) {
-                processing = false;
-            }
-
-            var htmlscanner = new Html5QrcodeScanner(
-                "qrReader", {
-                    fps: 10,
-                    qrbox: 250
-                }
-            )
-
-            htmlscanner.render(onScanSuccess, onScanError);
-        })
-
-        //Handler for manual NIM input
+        // Handler for manual NIM input
         document.getElementById('NIMsearch').addEventListener('submit', function(event) {
             event.preventDefault();
             const nimInput = document.getElementById('nim').value.trim();
@@ -364,6 +375,84 @@
                 });
             }
         });
+
+
+        // AES decryption function
+        function decryptAES(encryptedData) {
+            // Kunci AES harus sama dengan di R
+            const secretKey = "kuncirahasia1234";
+            const iv = CryptoJS.enc.Utf8.parse("1234567890123456"); // harus sama dengan IV
+
+            // Convert hex ke WordArray CryptoJS
+            const cipherWords = CryptoJS.enc.Hex.parse(encryptedData);
+
+            // Dekripsi
+            const bytes = CryptoJS.AES.decrypt({
+                    ciphertext: cipherWords
+                },
+                CryptoJS.enc.Utf8.parse(secretKey), {
+                    iv: iv
+                }
+            );
+
+            const originalText = bytes.toString(CryptoJS.enc.Utf8);
+
+            console.log("Text asli:", originalText);
+            return originalText;
+        }
+
+
+
+
+
+        /*
+         ** ---------------------
+         **       DASHBOARD
+         ** ---------------------
+         */
+
+        domReady(async () => {
+            await getUpdatedData(); // wait till load data from server done
+            fetchAttendanceData(peminatanFiltered); //
+        });
+
+        // Card statistik dan Pie Chart update base on data
+        function fetchAttendanceData(prodi) {
+            let semua = dataMahasiswa.filter(item => prodi === "" || prodi === "all" || item.kelas.includes(prodi));
+            let hadir = dataMahasiswa.filter(item => item.status === 1 && (prodi === "" || prodi === "all" || item.kelas
+                .includes(prodi)));
+            let tidakHadir = dataMahasiswa.filter(item => item.status === 0 && (prodi === "" || prodi === "all" || item
+                .kelas.includes(prodi)));
+            // Update card statistics
+            $('#allAttended').text(semua.length);
+            $('#attended').text(hadir.length);
+            $('#notAttended').text(tidakHadir.length);
+            // Update pie chart
+            attendanceChart.data.datasets[0].data = [hadir.length, tidakHadir.length];
+            attendanceChart.update();
+        }
+
+        // Filter table based on selected prodi
+        function prodiFilter(peminatans) {
+            peminatanFiltered = peminatans;
+            let peminatan = peminatans;
+            if (peminatans === 'all') {
+                peminatan = 'Kelas';
+            }
+            document.getElementById('cs-prodi').innerHTML = peminatan;
+            document.getElementById('ts-prodi').innerHTML = peminatan;
+            fetchAttendanceData(peminatans);
+
+            let rows = document.querySelectorAll("#tableBody tr");
+            rows.forEach(row => {
+                let peminatanCells = row.cells[3].textContent.toLowerCase(); // kolom Peminatan
+                if (peminatanCells.includes(peminatans.toLowerCase()) || peminatans === "all") {
+                    row.style.display = ""; // tampilkan
+                } else {
+                    row.style.display = "none"; // sembunyikan
+                }
+            });
+        }
 
 
         // Pie Chart Kehadiran Undangan
@@ -409,62 +498,36 @@
             });
         });
 
-        function fetchAttendanceData(prodi) {
-            document.getElementById
-            fetch('/mahasiswa')
-                .then(res => res.json())
-                .then(data => {
-                    let semua = data.allAttended.filter(item => prodi === "" || prodi === "all" || item.kelas.includes(
-                        prodi));
-                    let hadir = data.allAttended.filter(item => item.status === 1 && (prodi === "" || prodi === "all" ||
-                        item.kelas.includes(prodi)));
-                    let tidakHadir = data.allAttended.filter(item => item.status === 0 && (prodi === "" || prodi ===
-                        "all" || item.kelas.includes(prodi)));
-                    $('#allAttended').text(semua.length);
-                    $('#attended').text(hadir.length);
-                    $('#notAttended').text(tidakHadir.length);
-                    attendanceChart.data.datasets[0].data = [hadir.length, tidakHadir.length];
-                    attendanceChart.update();
-                })
-                .catch(err => console.error('Error fetching chart data:', err));
-        }
 
-        fetchAttendanceData('all');
-
-        // Initialize Chart
+        // Show table based on type (attended or not attended)
         function showTable(type) {
             document.getElementById('chartSection').classList.add('d-none');
             document.getElementById('tableSection').classList.remove('d-none');
             let AttendedStudents;
             let notAttendedStudents;
             const tableTitle = document.getElementById('tableTitle');
-            fetch('/mahasiswa')
-                .then(res => res.json())
-                .then(data => {
-                    AttendedStudents = data.allAttended.filter(m => m.status === 1);
-                    notAttendedStudents = data.allAttended.filter(m => m.status === 0);
-                    if (type === 'attended') {
-                        tableTitle.innerHTML =
-                            '<i class="fas fa-check-circle me-2" style="color: #10b981;"></i> Daftar Yang Telah Hadir';
-                        populateTable(AttendedStudents, 'Hadir', '#10b981');
-                    } else {
-                        tableTitle.innerHTML =
-                            '<i class="fas fa-clock me-2" style="color: #ef4444;"></i> Daftar Yang Belum Hadir';
-                        populateTable(notAttendedStudents, 'Belum Hadir', '#ef4444');
-                    }
-                })
-                .catch(err => console.error('Error fetching chart data:', err));
+            AttendedStudents = dataMahasiswa.filter(m => m.status === 1);
+            notAttendedStudents = dataMahasiswa.filter(m => m.status === 0);
+            if (type === 'attended') {
+                tableTitle.innerHTML =
+                    '<i class="fas fa-check-circle me-2" style="color: #10b981;"></i> Daftar Yang Telah Hadir';
+                populateTable(AttendedStudents, 'Hadir', '#10b981');
+            } else {
+                tableTitle.innerHTML =
+                    '<i class="fas fa-clock me-2" style="color: #ef4444;"></i> Daftar Yang Belum Hadir';
+                populateTable(notAttendedStudents, 'Belum Hadir', '#ef4444');
+            }
         }
 
-        // Aktifkan search filter
+        // search filter
         document.getElementById("searchInput").addEventListener("keyup", function() {
             let filter = this.value.toLowerCase(); // ambil input & lowercase
             let rows = document.querySelectorAll("#tableBody tr");
-
             rows.forEach(row => {
                 let nim = row.cells[1].textContent.toLowerCase(); // kolom NIM
                 let nama = row.cells[2].textContent.toLowerCase(); // kolom Nama
-                if (nim.includes(filter) || nama.includes(filter)) {
+                let kelas = row.cells[3].textContent.toLowerCase(); // kolom Kelas
+                if ((nim.includes(filter) || nama.includes(filter)) && (kelas.includes(peminatanFiltered.toLowerCase()) || peminatanFiltered === 'all')) {
                     row.style.display = ""; // tampilkan
                 } else {
                     row.style.display = "none"; // sembunyikan
@@ -476,44 +539,22 @@
         function populateTable(data, status, color) {
             const tableBody = document.getElementById('tableBody');
             tableBody.innerHTML = '';
+
             data.forEach((student, index) => {
-                tableBody.innerHTML += `
-                    <tr>
-                        <td>${index + 1}</td>
-                        <td>${student.nim}</td>
-                        <td>${student.nama}</td>
-                        <td>${student.kelas}</td>
-                        <td><span class="badge" style="background-color:${color};">${status}</span></td>
-                        <td>${student.updated_at_}</td>
-                    </tr>`;
+                tableBody.innerHTML +=
+                    `<tr> 
+                    <td> ${index + 1} </td> 
+                    <td> ${student.nim} </td> 
+                    <td> ${student.nama} </td> 
+                    <td> ${student.kelas} </td> 
+                    <td> 
+                        <span class="badge" style="background-color:${color};" > ${status} </span>
+                    </td> 
+                    <td> ${student.updated_at_} </td> 
+                </tr>`;
             });
 
-            prodiFilter(peminatanFiltered); // Filter table based on selected prodi
-
-        }
-
-        //Decript AES
-        function decryptAES(encryptedData) {
-            // Kunci AES harus sama dengan di R
-            const secretKey = "kuncirahasia1234";
-            const iv = CryptoJS.enc.Utf8.parse("1234567890123456"); // harus sama dengan IV
-
-            // Convert hex ke WordArray CryptoJS
-            const cipherWords = CryptoJS.enc.Hex.parse(encryptedData);
-
-            // Dekripsi
-            const bytes = CryptoJS.AES.decrypt({
-                    ciphertext: cipherWords
-                },
-                CryptoJS.enc.Utf8.parse(secretKey), {
-                    iv: iv
-                }
-            );
-
-            const originalText = bytes.toString(CryptoJS.enc.Utf8);
-
-            console.log("Text asli:", originalText);
-            return originalText;
+            prodiFilter(peminatanFiltered);
         }
 
         function showChart() {
