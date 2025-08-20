@@ -62,8 +62,8 @@
                 </div>
             </div>
 
-            <div class="col-12 col-md-4 pe-auto" onclick="showTable('attended')">
-                <div class="card stats-card cursor-pointer" style="border-left-color: #10b981;">
+            <div class="col-12 col-md-4 pe-auto" style="cursor: pointer; " onclick="showTable('attended')">
+                <div class="card stats-card" style="border-left-color: #10b981;">
                     <div class="card-body d-flex align-items-center">
                         <div class="flex-grow-1">
                             <h6 class="text-muted mb-0">Telah Hadir</h6>
@@ -74,8 +74,8 @@
                 </div>
             </div>
 
-            <div class="col-12 col-md-4" onclick="showTable('notAttended')">
-                <div class="card stats-card cursor-pointer" style="border-left-color: #ef4444;">
+            <div class="col-12 col-md-4" style="cursor: pointer;" onclick="showTable('notAttended')">
+                <div class="card stats-card" style="border-left-color: #ef4444;">
                     <div class="card-body d-flex align-items-center">
                         <div class="flex-grow-1">
                             <h6 class="text-muted mb-0">Belum Hadir</h6>
@@ -90,8 +90,24 @@
 
         <!-- Chart Section -->
         <div id="chartSection" class="card mb-4">
-            <div class="card-header">
-                <i class="fas fa-chart-pie me-2"></i> Grafik Kehadiran
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <div>
+                    <i class="fas fa-chart-pie me-2"></i> Grafik Kehadiran
+                </div>
+                <div class="dropdown">
+                    <button class="btn btn-secondary dropdown-toggle bg-transparent text-white fw-bold" type="button"
+                        data-bs-toggle="dropdown" aria-expanded="false" id="cs-prodi">
+                        Kelas
+                    </button>
+                    <ul class="dropdown-menu">
+                        <li><button class="dropdown-item" onclick="prodiFilter('all')">Semua</button></li>
+                        <li><button class="dropdown-item" onclick="prodiFilter('SI')">SI</button></li>
+                        <li><button class="dropdown-item" onclick="prodiFilter('SD')">SD</button></li>
+                        <li><button class="dropdown-item" onclick="prodiFilter('SK')">SK</button></li>
+                        <li><button class="dropdown-item" onclick="prodiFilter('SE')">SE</button></li>
+                        <li><button class="dropdown-item" onclick="prodiFilter('D3')">D3</button></li>
+                    </ul>
+                </div>
             </div>
             <div class="card-body">
                 <div class="chart-container">
@@ -129,7 +145,24 @@
                                 <th>No</th>
                                 <th>NIM</th>
                                 <th>Nama</th>
-                                <th>Kelas</th>
+                                <th>
+                                    <div class="dropdown">
+                                        <button class="btn btn-secondary dropdown-toggle bg-transparent text-black fw-bold"
+                                            type="button" data-bs-toggle="dropdown" aria-expanded="false"
+                                            id="ts-prodi">
+                                            Kelas
+                                        </button>
+                                        <ul class="dropdown-menu">
+                                            <li><button class="dropdown-item" onclick="prodiFilter('all')">Semua</button>
+                                            </li>
+                                            <li><button class="dropdown-item" onclick="prodiFilter('SI')">SI</button></li>
+                                            <li><button class="dropdown-item" onclick="prodiFilter('SD')">SD</button></li>
+                                            <li><button class="dropdown-item" onclick="prodiFilter('SK')">SK</button></li>
+                                            <li><button class="dropdown-item" onclick="prodiFilter('SE')">SE</button></li>
+                                            <li><button class="dropdown-item" onclick="prodiFilter('D3')">D3</button></li>
+                                        </ul>
+                                    </div>
+                                </th>
                                 <th>Status</th>
                                 <th>Waktu</th>
                             </tr>
@@ -142,9 +175,32 @@
     </div>
 
     <!-- Scripts -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script>
+        let peminatanFiltered = 'all';
+        function prodiFilter(peminatans) {
+            peminatanFiltered = peminatans;
+            let peminatan = peminatans;
+            if (peminatans === 'all') {
+                peminatan = 'Kelas';
+            }
+            document.getElementById('cs-prodi').innerHTML = peminatan;
+            document.getElementById('ts-prodi').innerHTML = peminatan;
+            fetchAttendanceData(peminatans);
+
+            let rows = document.querySelectorAll("#tableBody tr");
+            rows.forEach(row => {
+                let peminatanCells = row.cells[3].textContent.toLowerCase(); // kolom Peminatan
+                if (peminatanCells.includes(peminatans.toLowerCase()) || peminatans === "all") {
+                    row.style.display = ""; // tampilkan
+                } else {
+                    row.style.display = "none"; // sembunyikan
+                }
+            });
+        }
+
         // Ensure the DOM is fully loaded before running scripts
         function domReady(fn) {
             if (document.readyState === 'complete' || document.readyState === 'interactive') {
@@ -154,14 +210,13 @@
             }
         }
 
-        //Update attandance function
+        //Update attandance 
         function updateAttendance(data, nim) {
             // Get values from input fields
             let token = $("meta[name='csrf-token']").attr("content");
 
             //ajax
             $.ajax({
-
                 url: `/mahasiswa/${nim}`,
                 type: "PUT",
                 cache: false,
@@ -170,7 +225,7 @@
                 },
                 success: function(response) {
                     //show success message
-                    fetchAttendanceData();
+                    fetchAttendanceData('all');
                     Swal.fire({
                         icon: 'success',
                         title: "Terkonfirmasi!",
@@ -272,10 +327,11 @@
 
                 if (!processing) {
                     processing = true;
-                    let nim = decodedText.split(";")[0];
+                    let result = decryptAES(decodedText);
+                    let nim = result.split(";")[0];
                     confirmationMahasiswa(nim);
                     myqr.classList.remove('d-none');
-                    myqr.innerHTML = `<strong>Hasil Scan Terakhir:</strong> ${decodedText}`;
+                    myqr.innerHTML = `<strong>Hasil Scan Terakhir:</strong> ${result}`;
                 }
             }
 
@@ -353,36 +409,30 @@
             });
         });
 
-        function fetchAttendanceData() {
+        function fetchAttendanceData(prodi) {
             document.getElementById
-            fetch('/mahasiswa/status')
+            fetch('/mahasiswa')
                 .then(res => res.json())
                 .then(data => {
-                    console.log(data.attended);
-                    $('#allAttended').text(data.allAttended);
-                    $('#attended').text(data.attended);
-                    $('#notAttended').text(data.notAttended);
-                    attendanceChart.data.datasets[0].data = [data.attended, data.notAttended];
+                    let semua = data.allAttended.filter(item => prodi === "" || prodi === "all" || item.kelas.includes(
+                        prodi));
+                    let hadir = data.allAttended.filter(item => item.status === 1 && (prodi === "" || prodi === "all" ||
+                        item.kelas.includes(prodi)));
+                    let tidakHadir = data.allAttended.filter(item => item.status === 0 && (prodi === "" || prodi ===
+                        "all" || item.kelas.includes(prodi)));
+                    $('#allAttended').text(semua.length);
+                    $('#attended').text(hadir.length);
+                    $('#notAttended').text(tidakHadir.length);
+                    attendanceChart.data.datasets[0].data = [hadir.length, tidakHadir.length];
                     attendanceChart.update();
                 })
                 .catch(err => console.error('Error fetching chart data:', err));
         }
 
-        fetchAttendanceData();
-
-        //accessData
-        const notAttendedStudents = [{
-            nim: "222112006",
-            nama: "Eka Putri Maharani",
-            kelas: "D-IV Statistika",
-            status: "-"
-        }];
-        console.log(typeof(notAttendedStudents));
+        fetchAttendanceData('all');
 
         // Initialize Chart
-
         function showTable(type) {
-
             document.getElementById('chartSection').classList.add('d-none');
             document.getElementById('tableSection').classList.remove('d-none');
             let AttendedStudents;
@@ -393,7 +443,6 @@
                 .then(data => {
                     AttendedStudents = data.allAttended.filter(m => m.status === 1);
                     notAttendedStudents = data.allAttended.filter(m => m.status === 0);
-                    console.log(AttendedStudents);
                     if (type === 'attended') {
                         tableTitle.innerHTML =
                             '<i class="fas fa-check-circle me-2" style="color: #10b981;"></i> Daftar Yang Telah Hadir';
@@ -415,7 +464,6 @@
             rows.forEach(row => {
                 let nim = row.cells[1].textContent.toLowerCase(); // kolom NIM
                 let nama = row.cells[2].textContent.toLowerCase(); // kolom Nama
-
                 if (nim.includes(filter) || nama.includes(filter)) {
                     row.style.display = ""; // tampilkan
                 } else {
@@ -439,6 +487,33 @@
                         <td>${student.updated_at_}</td>
                     </tr>`;
             });
+
+            prodiFilter(peminatanFiltered); // Filter table based on selected prodi
+
+        }
+
+        //Decript AES
+        function decryptAES(encryptedData) {
+            // Kunci AES harus sama dengan di R
+            const secretKey = "kuncirahasia1234";
+            const iv = CryptoJS.enc.Utf8.parse("1234567890123456"); // harus sama dengan IV
+
+            // Convert hex ke WordArray CryptoJS
+            const cipherWords = CryptoJS.enc.Hex.parse(encryptedData);
+
+            // Dekripsi
+            const bytes = CryptoJS.AES.decrypt({
+                    ciphertext: cipherWords
+                },
+                CryptoJS.enc.Utf8.parse(secretKey), {
+                    iv: iv
+                }
+            );
+
+            const originalText = bytes.toString(CryptoJS.enc.Utf8);
+
+            console.log("Text asli:", originalText);
+            return originalText;
         }
 
         function showChart() {
