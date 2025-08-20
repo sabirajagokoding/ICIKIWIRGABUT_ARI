@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard Hadirin Wisuda - Politeknik Statistika</title>
+    <title>Sistem Presensi Undangan Wisudawan 2025 - Politeknik Statistika</title>
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
     <!-- Bootstrap 5 -->
@@ -101,7 +101,7 @@
 
                 <!-- Title -->
                 <div class="col-md-6">
-                    <h2>Sistem Presensi Terpadu</h2>
+                    <h3>Sistem Presensi Undangan Wisudawan 2025</h3>
                     <p>Politeknik Statistika STIS</p>
                 </div>
 
