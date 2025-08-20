@@ -10,7 +10,7 @@ use Illuminate\Support\Facades\Auth;
 
 
 Route::get('/', [LoginController::class, 'login'])->name('login')->middleware(middleware: 'guest');
-Route::get('actionlogin',[LoginController::class, 'login'])->name('login')->middleware(middleware: 'guest');
+Route::get('actionlogin',[LoginController::class, 'login'])->middleware(middleware: 'guest');
 Route::post('actionlogin', [LoginController::class, 'actionlogin'])->name('actionlogin')->middleware(middleware: 'guest');
 
 Route::get('home', [HomeController::class, 'index'])->name('home')->middleware('auth');
