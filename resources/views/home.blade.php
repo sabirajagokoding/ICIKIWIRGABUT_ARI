@@ -236,7 +236,7 @@
                     let nim = scanResult.split(";")[0];
                     confirmationMahasiswa(nim); // call confirmation modal
                     myqr.classList.remove('d-none');
-                    myqr.innerHTML = `<strong>Hasil Scan Terakhir:</strong> ${result}`;
+                    myqr.innerHTML = `<strong>Hasil Scan Terakhir:</strong> ${scanResult}`;
                 }
             }
 
