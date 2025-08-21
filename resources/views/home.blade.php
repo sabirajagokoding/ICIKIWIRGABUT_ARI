@@ -183,6 +183,20 @@
          */
         let peminatanFiltered = 'all';
         let dataMahasiswa = [];
+        function showLoader(){
+            const loaderOverlay = `
+            <div id="loader-overlay" class="d-flex justify-content-center align-items-center"
+                style="position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(255,255,255,0.7);z-index:9999;">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+            </div>
+            `;
+            $("body").append(loaderOverlay);
+        }
+        function removeLoader(){
+            $("#loader-overlay").remove();
+        }
 
 
         // Function to fetch updated data from the server
@@ -257,9 +271,11 @@
 
         // Function to handle confirmation of mahasiswa presence
         function confirmationMahasiswa(nim) {
+            showLoader();
             fetch(`/mahasiswa/${nim}`) // check existance of NIM
                 .then(res => res.json())
                 .then(data => {
+                    removeLoader();
                     if (data.message) { // NIM not found message
                         Swal.fire({
                             icon: "error",
@@ -322,7 +338,6 @@
         function updateAttendance(data, nim) {
             // Get values from input fields
             let token = $("meta[name='csrf-token']").attr("content");
-
             //ajax
             $.ajax({
                 url: `/mahasiswa/${nim}`,
@@ -330,6 +345,10 @@
                 cache: false,
                 data: {
                     "_token": token
+                },
+                beforeSend: function() {
+                    // show Loading Spinner
+                    showLoader();
                 },
                 success: function(response) {
                     domReady(async () => {
@@ -354,6 +373,10 @@
                         showConfirmButton: false,
                         timer: 2000
                     });
+                },
+                complete: function() {
+                    // Remove spinner loading animation
+                    removeLoader();
                 }
 
             });
@@ -412,8 +435,10 @@
          */
 
         domReady(async () => {
+            showLoader();
             await getUpdatedData(); // wait till load data from server done
-            fetchAttendanceData(peminatanFiltered); //
+            fetchAttendanceData(peminatanFiltered); 
+            removeLoader();
         });
 
         // Card statistik dan Pie Chart update base on data
