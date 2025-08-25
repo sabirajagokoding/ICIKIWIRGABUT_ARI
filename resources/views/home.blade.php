@@ -206,6 +206,8 @@
          */
         let peminatanFiltered = 'all';
         let dataMahasiswa = [];
+        let processing = true;
+        var htmlscanner;
 
         function showLoader() {
             const loaderOverlay = `
@@ -259,18 +261,18 @@
         domReady(function() {
             var nim;
             let result;
-            let processing = false;
             var myqr = document.getElementById('scanResult');
             var lastResult, countResults = 0;
 
             function onScanSuccess(decodedText, decodedResult) {
                 if (decodedText !== lastResult) {
                     lastResult = decodedText;
-                    processing = false;
+                    processing = true;
                 }
 
-                if (!processing) {
-                    processing = true;
+                if (processing) {
+                    processing = false;
+                    htmlscanner.pause();
                     let scanResult = decryptAES(decodedText);
                     let nim = scanResult.split(";")[0];
                     confirmationMahasiswa(nim); // call confirmation modal
@@ -280,10 +282,10 @@
             }
 
             function onScanError(errMessege) {
-                processing = false;
+                processing = true;
             }
 
-            var htmlscanner = new Html5QrcodeScanner(
+            htmlscanner = new Html5QrcodeScanner(
                 "qrReader", {
                     fps: 10,
                     qrbox: 250,
@@ -292,8 +294,7 @@
                     }
                 }
             )
-
-            htmlscanner.render(onScanSuccess, onScanError);
+            htmlscanner.render(onScanSuccess, onScanError);    
         })
 
 
@@ -312,9 +313,9 @@
                             showConfirmButton: false,
                             timer: 2000
                         });
+                        htmlscanner.resume(); // resume scanner
                     } else { // nim found
                         if (data.status === 1) { // mahasiswa already attended
-                            console.log(data.status)
                             Swal.fire({
                                 icon: "info",
                                 title: "Sudah Hadir!",
@@ -322,6 +323,7 @@
                                 showConfirmButton: false,
                                 timer: 2000
                             });
+                            htmlscanner.resume(); // resume scanner
                         } else { // mahasiswa not attended
                             const swalWithBootstrapButtons = Swal.mixin({
                                 customClass: {
@@ -348,9 +350,8 @@
                                         text: "Tidak ada perubahan pada kehadiran.",
                                         icon: "error"
                                     });
+                                    htmlscanner.resume(); // resume scanner
                                 }
-
-                                processing = false;
                             });
                         }
 
@@ -358,7 +359,6 @@
                 })
                 .catch(err => {
                     console.error("Fetch error:", err);
-                    processing = false;
                 });
         }
 
@@ -406,6 +406,7 @@
                 complete: function() {
                     // hapus spinner
                     removeLoader();
+                    htmlscanner.resume(); // resume scanner
                 }
 
             });
