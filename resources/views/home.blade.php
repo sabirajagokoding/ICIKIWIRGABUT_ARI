@@ -57,7 +57,8 @@
                             <form action="{{ route('csv.upload') }}" method="POST" enctype="multipart/form-data">
                                 @csrf
                                 <div class="mb-3">
-                                    <label class="form-label">Pilih File CSV</label>
+                                    <label class="form-label" for="file">Pilih File CSV</label>
+                                    <p>Gunakan format CSV : <strong>nim;nama;kelas</strong></p>
                                     <input type="file" name="file" class="form-control" accept=".csv" required>
                                 </div>
                                 <button type="submit" class="btn btn-success w-100">
