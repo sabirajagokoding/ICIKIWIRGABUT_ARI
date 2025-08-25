@@ -365,7 +365,6 @@
         function updateAttendance(data, nim) {
             // Get values from input fields
             let token = $("meta[name='csrf-token']").attr("content");
-
             //ajax
             $.ajax({
                 url: `/mahasiswa/${nim}`,
@@ -461,13 +460,13 @@
          **       DASHBOARD
          ** ---------------------
          */
-        domReady(
-            async () => {
-                showLoader();
-                await getUpdatedData(); // wait till load data from server done
-                fetchAttendanceData(peminatanFiltered);
-                removeLoader();
-            });
+
+        domReady(async () => {
+            showLoader();
+            await getUpdatedData(); // wait till load data from server done
+            fetchAttendanceData(peminatanFiltered); 
+            removeLoader();
+        });
 
         // Card statistik dan Pie Chart update base on data
         function fetchAttendanceData(prodi) {
