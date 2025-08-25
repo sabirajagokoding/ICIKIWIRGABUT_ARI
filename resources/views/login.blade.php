@@ -12,7 +12,7 @@
 <body>
     <div class="container"><br>
         <div class="col-md-4 col-md-offset-4">
-            <h2 class="text-center"><b>Sistem Presensi Undangan Wisudawan 2025 - Politeknik Statistika</b><br></h3>
+            <h2 class="text-center"><b>Sistem Presensi Wisudawan STIS</b><br></h3>
                 <hr>
                 @if (session('error'))
                     <div class="alert alert-danger">
