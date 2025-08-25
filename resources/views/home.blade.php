@@ -273,7 +273,6 @@
                     processing = true;
                     let scanResult = decryptAES(decodedText);
                     let nim = scanResult.split(";")[0];
-                    console.log(nim);
                     confirmationMahasiswa(nim); // call confirmation modal
                     myqr.classList.remove('d-none');
                     myqr.innerHTML = `<strong>Hasil Scan Terakhir:</strong> ${scanResult}`;
@@ -315,6 +314,7 @@
                         });
                     } else { // nim found
                         if (data.status === 1) { // mahasiswa already attended
+                            console.log(data.status)
                             Swal.fire({
                                 icon: "info",
                                 title: "Sudah Hadir!",

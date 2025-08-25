@@ -47,7 +47,7 @@ class MahasiswaDataController extends Controller
             return response()->json(['message' => 'NIM tidak diberikan'], 400);
         }
 
-        $mhs = DB::table('mahasiswas')->select('nim','nama','kelas','updated_at')->where( 'nim',$nim)->first();
+        $mhs = DB::table('mahasiswas')->select('nim','nama','kelas','updated_at','status')->where( 'nim',$nim)->first();
 
         if ($mhs) {
             return response()->json($mhs); // kirim data dalam bentuk JSON
