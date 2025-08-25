@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Mahasiswa;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Auth;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -62,7 +63,7 @@ class MahasiswaDataController extends Controller
         $mahasiswa = Mahasiswa::where('nim', $nim)->first();
 
         if ($mahasiswa) {
-            $mahasiswa->update(['status' => 1]);
+            $mahasiswa->update(['status' => 1, 'updated_by'=>Auth::user()->name]);
 
             return response()->json([
                 'success' => true,

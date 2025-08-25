@@ -17,6 +17,7 @@ return new class extends Migration
             $table->string('nama');
             $table->string('kelas');
             $table->integer('status')->default(0);
+            $table->string('updated_by')->nullable();
             $table->timestamps();
         });
         

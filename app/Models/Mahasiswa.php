@@ -19,5 +19,6 @@ class Mahasiswa extends Model
         'nama',
         'kelas',
         'status',
+        'updated_by',
     ];
 }

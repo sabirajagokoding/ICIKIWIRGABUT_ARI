@@ -185,6 +185,7 @@
                                 </th>
                                 <th>Status</th>
                                 <th>Waktu</th>
+                                <th>Diupdate oleh</th>
                             </tr>
                         </thead>
                         <tbody id="tableBody"></tbody>
@@ -606,6 +607,7 @@
                         <span class="btn badge" onclick="updateStatus('${student.nim}','${status}', 0)" style="background-color:${color};" > ${status} </span>
                     </td> 
                     <td> ${student.updated_at_} </td> 
+                    <td> ${student.updated_by} </td> 
                 </tr>`;
             });
 
