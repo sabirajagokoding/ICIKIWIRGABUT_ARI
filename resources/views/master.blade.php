@@ -119,7 +119,7 @@
                                     onclick="event.preventDefault(); document.getElementById('logout-form').submit();"
                                     class="dropdown-item">
                                     <i class="fa fa-power-off me-2"></i> Log Out
-                                    
+
                                 </a>
 
                                 <form id="logout-form" action="{{ route('actionlogout') }}" method="POST"
@@ -127,7 +127,7 @@
                                     @csrf
                                 </form>
                             </li>
-                            
+
                         </ul>
                     </div>
                 </div>

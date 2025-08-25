@@ -2,7 +2,6 @@
 
 @section('konten')
     <h4>Selamat Datang <b>{{ Auth::user()->name }}</b></h4>
-
     <div class="container mt-4">
         <!-- Scanner & Input Section -->
         <div class="row mb-4">
@@ -45,6 +44,29 @@
                         </form>
                     </div>
                 </div>
+                {{-- IMPORT DATA MAHASISWA --}}
+                @if (session('role') === 1)
+                    <div class="card mb-5 mt-3">
+                        <div class="card-header">
+                            <i class="fas fa-file-csv me-2"></i> Import Data CSV
+                        </div>
+                        <div class="card-body">
+                            @if (session('success'))
+                                <div class="alert alert-success">{{ session('success') }}</div>
+                            @endif
+                            <form action="{{ route('csv.upload') }}" method="POST" enctype="multipart/form-data">
+                                @csrf
+                                <div class="mb-3">
+                                    <label class="form-label">Pilih File CSV</label>
+                                    <input type="file" name="file" class="form-control" accept=".csv" required>
+                                </div>
+                                <button type="submit" class="btn btn-success w-100">
+                                    <i class="fas fa-upload me-2"></i> Upload & Import
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                @endif
             </div>
         </div>
 
@@ -184,6 +206,22 @@
         let peminatanFiltered = 'all';
         let dataMahasiswa = [];
 
+        function showLoader() {
+            const loaderOverlay = `
+            <div id="loader-overlay" class="d-flex justify-content-center align-items-center"
+                style="position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(255,255,255,0.7);z-index:9999;">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+            </div>
+            `;
+            $("body").append(loaderOverlay);
+        }
+
+        function removeLoader() {
+            $("#loader-overlay").remove();
+        }
+
 
         // Function to fetch updated data from the server
         async function getUpdatedData() {
@@ -236,7 +274,7 @@
                     let nim = scanResult.split(";")[0];
                     confirmationMahasiswa(nim); // call confirmation modal
                     myqr.classList.remove('d-none');
-                    myqr.innerHTML = `<strong>Hasil Scan Terakhir:</strong> ${result}`;
+                    myqr.innerHTML = `<strong>Hasil Scan Terakhir:</strong> ${scanResult}`;
                 }
             }
 
@@ -247,7 +285,10 @@
             var htmlscanner = new Html5QrcodeScanner(
                 "qrReader", {
                     fps: 10,
-                    qrbox: 250
+                    qrbox: 250,
+                    videoConstraints: {
+                        facingMode: "environment"
+                    }
                 }
             )
 
@@ -257,9 +298,11 @@
 
         // Function to handle confirmation of mahasiswa presence
         function confirmationMahasiswa(nim) {
+            showLoader();
             fetch(`/mahasiswa/${nim}`) // check existance of NIM
                 .then(res => res.json())
                 .then(data => {
+                    removeLoader();
                     if (data.message) { // NIM not found message
                         Swal.fire({
                             icon: "error",
@@ -331,6 +374,10 @@
                 data: {
                     "_token": token
                 },
+                beforeSend: function() {
+                    // tampilkan spinner
+                    showLoader();
+                },
                 success: function(response) {
                     domReady(async () => {
                         await getUpdatedData(); // wait till load data from server done
@@ -354,6 +401,10 @@
                         showConfirmButton: false,
                         timer: 2000
                     });
+                },
+                complete: function() {
+                    // hapus spinner
+                    removeLoader();
                 }
 
             });
@@ -410,11 +461,13 @@
          **       DASHBOARD
          ** ---------------------
          */
-
-        domReady(async () => {
-            await getUpdatedData(); // wait till load data from server done
-            fetchAttendanceData(peminatanFiltered); //
-        });
+        domReady(
+            async () => {
+                showLoader();
+                await getUpdatedData(); // wait till load data from server done
+                fetchAttendanceData(peminatanFiltered);
+                removeLoader();
+            });
 
         // Card statistik dan Pie Chart update base on data
         function fetchAttendanceData(prodi) {
@@ -501,6 +554,7 @@
 
         // Show table based on type (attended or not attended)
         function showTable(type) {
+            tableType = type;
             document.getElementById('chartSection').classList.add('d-none');
             document.getElementById('tableSection').classList.remove('d-none');
             let AttendedStudents;
@@ -527,7 +581,8 @@
                 let nim = row.cells[1].textContent.toLowerCase(); // kolom NIM
                 let nama = row.cells[2].textContent.toLowerCase(); // kolom Nama
                 let kelas = row.cells[3].textContent.toLowerCase(); // kolom Kelas
-                if ((nim.includes(filter) || nama.includes(filter)) && (kelas.includes(peminatanFiltered.toLowerCase()) || peminatanFiltered === 'all')) {
+                if ((nim.includes(filter) || nama.includes(filter)) && (kelas.includes(peminatanFiltered
+                        .toLowerCase()) || peminatanFiltered === 'all')) {
                     row.style.display = ""; // tampilkan
                 } else {
                     row.style.display = "none"; // sembunyikan
@@ -539,7 +594,6 @@
         function populateTable(data, status, color) {
             const tableBody = document.getElementById('tableBody');
             tableBody.innerHTML = '';
-
             data.forEach((student, index) => {
                 tableBody.innerHTML +=
                     `<tr> 
@@ -548,7 +602,7 @@
                     <td> ${student.nama} </td> 
                     <td> ${student.kelas} </td> 
                     <td> 
-                        <span class="badge" style="background-color:${color};" > ${status} </span>
+                        <span class="btn badge" onclick="updateStatus('${student.nim}','${status}', 0)" style="background-color:${color};" > ${status} </span>
                     </td> 
                     <td> ${student.updated_at_} </td> 
                 </tr>`;
@@ -556,6 +610,46 @@
 
             prodiFilter(peminatanFiltered);
         }
+
+        // Function to update status back to 'Belum Hadir'
+        function updateStatus(nim, status, newStatus) {
+            if (status === 'Belum Hadir' || @json(session('role'))==0) {
+                return; // set to not attended
+            }
+            showLoader();
+            fetch('/update-status', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                    },
+                    body: JSON.stringify({
+                        nim: nim,
+                        status: newStatus
+                    })
+                })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success) {
+                        domReady(async () => {
+                            await getUpdatedData(); // wait till load data from server done
+                            fetchAttendanceData('all');
+                            removeLoader();
+                            Swal.fire({
+                                icon: 'success',
+                                title: 'Status Diperbarui',
+                                text: `Status mahasiswa dengan NIM ${nim} telah dihapus.`,
+                                showConfirmButton: false,
+                                timer: 1500
+                            });
+                        });
+                    } else {
+                        alert('Gagal: ' + data.message);
+                    }
+                })
+                .catch(err => console.error(err));
+        }
+
 
         function showChart() {
             document.getElementById('chartSection').classList.remove('d-none');

@@ -20,6 +20,7 @@ return new class extends Migration
             $table->string('password');
             $table->string('verify_key')->nullable();
             $table->integer('active');
+            $table->integer('role')->default(0); // 0 = user, 1 = admin
             $table->rememberToken();
             $table->timestamps();
         });
