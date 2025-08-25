@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Log;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
+use Mockery\Undefined;
 use function PHPUnit\Framework\returnArgument;
 
 class MahasiswaDataController extends Controller
@@ -42,7 +43,11 @@ class MahasiswaDataController extends Controller
 
     public function show($nim)
     {
-        $mhs = DB::table('mahasiswas')->where('nim', $nim)->first();
+        if (empty($nim)) {
+            return response()->json(['message' => 'NIM tidak diberikan'], 400);
+        }
+
+        $mhs = DB::table('mahasiswas')->select('nim','nama','kelas','updated_at')->where( 'nim',$nim)->first();
 
         if ($mhs) {
             return response()->json($mhs); // kirim data dalam bentuk JSON

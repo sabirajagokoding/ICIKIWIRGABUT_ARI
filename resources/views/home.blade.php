@@ -272,6 +272,7 @@
                     processing = true;
                     let scanResult = decryptAES(decodedText);
                     let nim = scanResult.split(";")[0];
+                    console.log(nim);
                     confirmationMahasiswa(nim); // call confirmation modal
                     myqr.classList.remove('d-none');
                     myqr.innerHTML = `<strong>Hasil Scan Terakhir:</strong> ${scanResult}`;
@@ -445,9 +446,8 @@
                 }
             );
 
-            const originalText = bytes.toString(CryptoJS.enc.Utf8);
+            const originalText = bytes.toString(CryptoJS.enc.Utf8) ? bytes.toString(CryptoJS.enc.Utf8) : 'unknown';
 
-            console.log("Text asli:", originalText);
             return originalText;
         }
 
