@@ -26,7 +26,6 @@ class RegisterController extends Controller
             'email' => 'required|email|unique:users,email',
             'username' => 'required|string|max:50|unique:users,username',
             'password' => 'required|min:6|confirmed',
-            'role' => 'required|in:0,1', // 0 = user, 1 = admin
         ], [
             'email.unique' => 'Email sudah digunakan, silakan gunakan email lain.',
             'username.unique' => 'Username sudah digunakan, silakan pilih username lain.',
