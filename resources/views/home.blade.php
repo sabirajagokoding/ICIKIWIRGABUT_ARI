@@ -434,7 +434,7 @@
         // AES decryption function
         function decryptAES(encryptedData) {
             // Kunci AES harus sama dengan di R
-            const secretKey = "kuncirahasia1234";
+            const secretKey = "wisudastis63";
             const iv = CryptoJS.enc.Utf8.parse("1234567890123456"); // harus sama dengan IV
 
             // Convert hex ke WordArray CryptoJS
