@@ -201,15 +201,18 @@
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script>
         /*
-         ** -------------------------------------
-         **     GLOBAL VARIABLES & FUNCTIONS
-         ** -------------------------------------
+         ** --------------------------
+         **     GLOBAL VARIABLES 
+         ** --------------------------
          */
-        let peminatanFiltered = 'all';
-        let dataMahasiswa = [];
-        let processing = true;
-        var htmlscanner;
+        let peminatanFiltered = 'all'; // filter kelas/peminatan, default all
+        let dataMahasiswa = []; // global variable to store fetched data mahasiswa
+        let processing = true; //scanner processing state
+        var htmlscanner; // html5 qrcode scanner instance
 
+        /*
+        ** Show & Remove Loader spinner Overlay
+        */
         function showLoader() {
             const loaderOverlay = `
             <div id="loader-overlay" class="d-flex justify-content-center align-items-center"
@@ -228,6 +231,7 @@
 
 
         // Function to fetch updated data from the server
+        // @return : updates 'dataMahasiswa' global variable array by new data from server
         async function getUpdatedData() {
             try {
                 const res = await fetch('/mahasiswa');
@@ -263,7 +267,7 @@
             var nim;
             let result;
             var myqr = document.getElementById('scanResult');
-            var lastResult, countResults = 0;
+            var lastResult;
 
             function onScanSuccess(decodedText, decodedResult) {
                 if (decodedText !== lastResult) {
@@ -306,13 +310,13 @@
                 .then(res => res.json())
                 .then(data => {
                     removeLoader();
-                    if (data.message) { // NIM not found message
+                    if (data.message) { // NIM not found
                         Swal.fire({
                             icon: "error",
                             title: "GAGAL!",
                             text: data.message,
                             showConfirmButton: false,
-                            timer: 2000
+                            timer: 1500
                         });
                         htmlscanner.resume(); // resume scanner
                     } else { // nim found
@@ -322,7 +326,7 @@
                                 title: "Sudah Hadir!",
                                 text: data.nama + " sudah ditandai hadir.",
                                 showConfirmButton: false,
-                                timer: 2000
+                                timer: 1500
                             });
                             htmlscanner.resume(); // resume scanner
                         } else { // mahasiswa not attended
@@ -344,7 +348,7 @@
                                 reverseButtons: true
                             }).then((result) => {
                                 if (result.isConfirmed) {
-                                    updateAttendance(data, nim); // update attendance status
+                                    updateAttendance(data, nim); // update mahasiswa attendance status with nim = nim
                                 } else if (result.dismiss === Swal.DismissReason.cancel) {
                                     Swal.fire({
                                         title: "Dibatalkan",
@@ -360,11 +364,18 @@
                 })
                 .catch(err => {
                     console.error("Fetch error:", err);
+                })
+                .finally(() => {
+                    removeLoader(); // ensure loader removed
+                    htmlscanner.resume(); // resume scanner
                 });
         }
 
 
-        // Update attandance status
+        /* Update attandance status from 0 to 1 in database
+        ** @param data : object mahasiswa for showing mahasiswa name in alert
+        ** @param nimm : nim of mahasiswa to be updated
+        */ 
         function updateAttendance(data, nim) {
             // Get values from input fields
             let token = $("meta[name='csrf-token']").attr("content");
@@ -377,7 +388,7 @@
                     "_token": token
                 },
                 beforeSend: function() {
-                    // tampilkan spinner
+                    // show spinner
                     showLoader();
                 },
                 success: function(response) {
@@ -401,25 +412,27 @@
                         title: "GAGAL!",
                         text: "Terjadi kesalahan saat memperbarui kehadiran.",
                         showConfirmButton: false,
-                        timer: 2000
+                        timer: 1500
                     });
                 },
                 complete: function() {
-                    // hapus spinner
+                    // delete spinner
                     removeLoader();
                     htmlscanner.resume(); // resume scanner
                 }
-
             });
         }
 
 
-        // Handler for manual NIM input
+        /* Handler for manual NIM input
+        ** @trigger : submit form
+        */
         document.getElementById('NIMsearch').addEventListener('submit', function(event) {
             event.preventDefault();
             const nimInput = document.getElementById('nim').value.trim();
             if (nimInput) {
                 confirmationMahasiswa(nimInput);
+                document.getElementById('nim').value = ''; // clear input field
             } else {
                 Swal.fire({
                     icon: 'warning',
@@ -431,10 +444,14 @@
         });
 
 
-        // AES decryption function
+        /* AES decryption function
+        ** @param encryptedData : hex string
+        ** @return original text
+        ** used by : handle qr code scanning
+        */
         function decryptAES(encryptedData) {
             // Kunci AES harus sama dengan di R
-            const secretKey = "wisudastis63";
+            const secretKey = "wisudastisss6364";
             const iv = CryptoJS.enc.Utf8.parse("1234567890123456"); // harus sama dengan IV
 
             // Convert hex ke WordArray CryptoJS
@@ -464,6 +481,9 @@
          ** ---------------------
          */
 
+        /*
+        ** Load data and show to chart and statistics cards when DOM ready
+        */
         domReady(async () => {
             showLoader();
             await getUpdatedData(); // wait till load data from server done
